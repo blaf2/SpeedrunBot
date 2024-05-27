@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.json.JSONArray;
@@ -96,8 +97,144 @@ public class YouTubeAPIv3 {
         this.apikey = apikey;
     }
 
-    public String[] SearchForVideo(String q) throws JSONException {
-        com.gmt2001.Console.debug.println("Query = [" + q + "]");
+    public String[][] SearchForPlaylist (String q){
+        ArrayList<String[]> toReturn = new ArrayList<String[]>();
+        String[][] toReturnArray;
+        String nextPageToken = null;
+        if (q.contains("list=") | q.contains("?list=")) {
+            q = q.substring(q.indexOf("list=") + 5);
+        }
+
+        JSONObject j = GetData("https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=" + q + "&fields=items(id%2Csnippet(channelTitle%2Cdescription%2Ctitle))%2CpageInfo&key=" + apikey);
+        if (j.getBoolean("_success")) {
+            updateQuota(100L);
+            if (j.getInt("_http") == 200) {
+                JSONObject pageInfo = j.getJSONObject("pageInfo");
+                if (pageInfo.getInt("totalResults") == 0) {
+                    com.gmt2001.Console.debug.println("Search API Called: No Results");
+
+                    toReturnArray = new String[toReturn.size()][4];
+                    return toReturn.toArray(toReturnArray);
+                }
+
+                JSONArray a = j.getJSONArray("items");
+                if (a.length() > 0) {
+                    JSONObject it = a.getJSONObject(0);
+
+                    JSONObject sn = it.getJSONObject("snippet");
+
+                    com.gmt2001.Console.debug.println("Search API Success");
+
+                    toReturn.add( new String[] { it.getString("id"), sn.getString("title"), sn.getString("channelTitle"), sn.getString("description") });
+                } else {
+                    com.gmt2001.Console.debug.println("Search API Fail: Length == 0");
+
+                    toReturnArray = new String[toReturn.size()][4];
+                    return toReturn.toArray(toReturnArray);
+                }
+            } else {
+                com.gmt2001.Console.debug.println("Search API Fail: HTTP Code " + j.getInt("_http"));
+
+                toReturnArray = new String[toReturn.size()][4];
+                return toReturn.toArray(toReturnArray);
+            }
+        } else {
+            com.gmt2001.Console.debug.println("Search API Fail: Returned Failure");
+
+            toReturnArray = new String[toReturn.size()][4];
+            return toReturn.toArray(toReturnArray);
+        }
+
+        JSONObject j2 = GetData("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=" + q + "&key=" + apikey);
+        if (j2.getBoolean("_success")) {
+            updateQuota(100L);
+            if (j2.getInt("_http") == 200) {
+                JSONObject pageInfo = j2.getJSONObject("pageInfo");
+                if (pageInfo.getInt("totalResults") == 0) {
+                    com.gmt2001.Console.debug.println("Search API Called: No Results");
+
+                    toReturnArray = new String[toReturn.size()][4];
+                    return toReturn.toArray(toReturnArray);
+                }
+
+                if (j2.has("nextPageToken")) {
+                    nextPageToken = j2.getString("nextPageToken");
+                }
+
+                JSONArray a = j2.getJSONArray("items");
+                for(int i = 0; i < a.length(); i++){
+                    JSONObject it = a.getJSONObject(i);
+
+                    JSONObject sn = it.getJSONObject("snippet");
+                    JSONObject id = sn.getJSONObject("resourceId");
+
+                    com.gmt2001.Console.debug.println("Search API Success");
+
+                    toReturn.add(new String[] { id.getString("videoId"), sn.getString("title"), sn.getString("channelTitle"), sn.getString("description") });
+                }
+            } else {
+                com.gmt2001.Console.debug.println("Search API Fail: HTTP Code " + j2.getInt("_http"));
+
+                toReturnArray = new String[toReturn.size()][4];
+                return toReturn.toArray(toReturnArray);
+            }
+        } else {
+            com.gmt2001.Console.debug.println("Search API Fail: Returned Failure");
+
+            toReturnArray = new String[toReturn.size()][4];
+            return toReturn.toArray(toReturnArray);
+        }
+
+        while(nextPageToken != null) {
+            j2 = GetData("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=" + q + "&pageToken=" + nextPageToken + "&key=" + apikey);
+            if (j2.getBoolean("_success")) {
+                updateQuota(100L);
+                if (j2.getInt("_http") == 200) {
+                    JSONObject pageInfo = j2.getJSONObject("pageInfo");
+                    if (pageInfo.getInt("totalResults") == 0) {
+                        com.gmt2001.Console.debug.println("Search API Called: No Results");
+
+                        toReturnArray = new String[toReturn.size()][4];
+                        return toReturn.toArray(toReturnArray);
+                    }
+
+                    if (j2.has("nextPageToken")) {
+                        nextPageToken = j2.getString("nextPageToken");
+                    } else{
+                        nextPageToken = null;
+                    }
+
+                    JSONArray a = j2.getJSONArray("items");
+                    for (int i = 0; i < a.length(); i++) {
+                        JSONObject it = a.getJSONObject(i);
+
+                        JSONObject sn = it.getJSONObject("snippet");
+                        JSONObject id = sn.getJSONObject("resourceId");
+
+                        com.gmt2001.Console.debug.println("Search API Success");
+
+                        toReturn.add(new String[]{id.getString("videoId"), sn.getString("title"), sn.getString("channelTitle"), sn.getString("description")});
+                    }
+                } else {
+                    com.gmt2001.Console.debug.println("Search API Fail: HTTP Code " + j2.getInt("_http"));
+
+                    toReturnArray = new String[toReturn.size()][4];
+                    return toReturn.toArray(toReturnArray);
+                }
+            } else {
+                com.gmt2001.Console.debug.println("Search API Fail: Returned Failure");
+
+                toReturnArray = new String[toReturn.size()][4];
+                return toReturn.toArray(toReturnArray);
+            }
+        }
+
+        toReturnArray = new String[toReturn.size()][4];
+        return toReturn.toArray(toReturnArray);
+    }
+
+    public String[] SearchForVideo(String q) {
+       com.gmt2001.Console.debug.println("Query = [" + q + "]");
 
         if (q.contains("v=") | q.contains("?v=")) {
             q = q.substring(q.indexOf("v=") + 2, q.indexOf("v=") + 13);
@@ -114,7 +251,7 @@ public class YouTubeAPIv3 {
             if (j.toString().contains("Unauthorized")) {
                 com.gmt2001.Console.debug.println("URL Check Returned Unauthorized (Video Marked Private)");
 
-                return new String[]{q, "Video Marked Private", ""};
+                return new String[]{q, "Video Marked Private", "", ""};
             }
 
             if (j.getInt("_http") == 200) {
@@ -122,11 +259,11 @@ public class YouTubeAPIv3 {
                     com.gmt2001.Console.debug.println("URL Check Success");
 
                     String a = j.getString("title");
-                    return new String[]{q, a, ""};
+                    return new String[]{q, a, "", ""};
                 } catch (JSONException ex) {
                     com.gmt2001.Console.err.printStackTrace(ex);
 
-                    return new String[]{"", "", ""};
+                    return new String[]{"", "", "", ""};
                 }
             }
         } else {
@@ -140,7 +277,7 @@ public class YouTubeAPIv3 {
                     if (pageInfo.getInt("totalResults") == 0) {
                         com.gmt2001.Console.debug.println("Search API Called: No Results");
 
-                        return new String[]{q, "No Search Results Found", ""};
+                        return new String[] { q, "No Search Results Found", "", "" };
                     }
 
                     JSONArray a = j2.getJSONArray("items");
@@ -152,27 +289,27 @@ public class YouTubeAPIv3 {
 
                         com.gmt2001.Console.debug.println("Search API Success");
 
-                        return new String[]{id.getString("videoId"), sn.getString("title"), sn.getString("channelTitle")};
+                        return new String[] { id.getString("videoId"), sn.getString("title"), sn.getString("channelTitle"), sn.getString("description") };
                     } else {
                         com.gmt2001.Console.debug.println("Search API Fail: Length == 0");
 
-                        return new String[]{"", "", ""};
+                        return new String[] { "", "", "", "" };
                     }
                 } else {
                     com.gmt2001.Console.debug.println("Search API Fail: HTTP Code " + j2.getInt("_http"));
 
-                    return new String[]{"", "", ""};
+                    return new String[] { "", "", "", "" };
                 }
             } else {
                 com.gmt2001.Console.debug.println("Search API Fail: Returned Failure");
 
-                return new String[]{"", "", ""};
+                return new String[] { "", "", "", "" };
             }
         }
 
         com.gmt2001.Console.debug.println("URL Check Fatal Error");
 
-        return new String[]{"", "", ""};
+        return new String[]{"", "", "", ""};
     }
 
     public int[] GetVideoLength(String id) throws JSONException {

@@ -76,6 +76,35 @@ $(function() {
     };
 
     /*
+     * @function Generates an add playlist modal
+     *
+     * @param  {String}   title
+     * @param  {String}   label
+     * @param  {String}   btn
+     * @param  {String}   placeholder
+     * @param  {Function} onClose
+     * @return {Object}
+     */
+    helpers.getAddPlaylistModal = (title, label, btn, placeholder, onClose) => {
+        return helpers.getModal('playlist-add-modal', title, btn, $('<div/>', {
+            'class': 'form-group'
+        }).append($('<label/>', {
+            'text': label
+        })).append($('<input/>', {
+            'class': 'form-control',
+            'type': 'text',
+            'placeholder': placeholder,
+            'id': 'playlist-url',
+            'focus': () => {
+                $('#playlist-url').attr('placeholder', '');
+            },
+            'blur': () => {
+                $('#playlist-url').attr('placeholder', placeholder);
+            }
+        })), onClose);
+    };
+
+    /*
      * @function Generates a load playlist modal
      *
      * @param  {String}   title

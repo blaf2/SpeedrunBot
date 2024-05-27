@@ -40,10 +40,12 @@ import org.json.JSONStringer;
 import tv.phantombot.PhantomBot;
 import tv.phantombot.event.EventBus;
 import tv.phantombot.event.command.CommandEvent;
+import tv.phantombot.event.ytplayer.YTPlayerAddPlaylistEvent;
 import tv.phantombot.event.ytplayer.YTPlayerConnectEvent;
 import tv.phantombot.event.ytplayer.YTPlayerCurrentIdEvent;
 import tv.phantombot.event.ytplayer.YTPlayerDeleteCurrentEvent;
 import tv.phantombot.event.ytplayer.YTPlayerDeletePlaylistByIDEvent;
+import tv.phantombot.event.ytplayer.YTPlayerDeletePlaylistEvent;
 import tv.phantombot.event.ytplayer.YTPlayerDeleteSREvent;
 import tv.phantombot.event.ytplayer.YTPlayerDisconnectEvent;
 import tv.phantombot.event.ytplayer.YTPlayerLoadPlaylistEvent;
@@ -267,6 +269,15 @@ public class WsYTHandler implements WsFrameHandler {
                         EventBus.instance().postAsync(new YTPlayerSongRequestEvent(dataString));
                     }
                     break;
+                case "addPlaylist":
+                    if (jso.has("youTubeID")) {
+                        EventBus.instance().postAsync(new YTPlayerAddPlaylistEvent(jso.getString("youTubeID")));
+                    }
+                    break;
+                case "deletePlaylist":
+                    if (jso.has("playlistName")) {
+                        EventBus.instance().postAsync(new YTPlayerDeletePlaylistEvent(jso.getString("playlistName")));
+                    }
                 case "loadpl":
                     EventBus.instance().postAsync(new YTPlayerLoadPlaylistEvent(jso.getString("playlist")));
                     break;

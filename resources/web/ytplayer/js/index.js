@@ -521,6 +521,16 @@ $(function() {
         }).modal('toggle');
     });
 
+     $('#playlist-add-playlist-button').on('click', () => {
+        helpers.getAddPlaylistModal('Add Playlist', 'YouTube Playlist Url', 'Add', 'https://www.youtube.com/playlist?list=PLwbxBuUF5io4vcXYGFsPRI4FBvlEee6mo', () => {
+            let playlist = $('#playlist-url').val();
+
+            if (playlist.length > 0) {
+                player.addPlaylist(playlist);
+            }
+        }).modal('toggle');
+    });
+
     // Load playlist button.
     $('#load-playlist-button').on('click', () => {
         player.dbQuery('get_playlists', 'yt_playlists_registry', (results) => {
@@ -586,6 +596,33 @@ $(function() {
     // Playlist shuffle button.
     $('#playlist-shuffle-button').on('click', () => {
         player.shufflePlaylist();
+    });
+
+    $('#delete-playlist-button').on('click', () => {
+        player.dbQuery('get_playlists', 'yt_playlists_registry', (results) => {
+            // Get the keys.
+            results = Object.keys(results);
+            const playlists = [];
+
+            for (let i = 0; i < results.length; i++) {
+                if (results[i].indexOf('ytPlaylist_') !== -1 && results[i].substr(results[i].indexOf('_') + 1, results[i].length) != 'default') {
+                    playlists.push(results[i].substr(results[i].indexOf('_') + 1, results[i].length));
+                }
+            }
+
+            helpers.getPlaylistModal('Delete Playlist', 'Playlist Name', 'Delete', 'Playlist', playlists, () => {
+                let playlist = $('#playlist-load').find(':selected').text();
+
+                if (playlist === 'Select a playlist') {
+                    toastr.error('Please select a valid playlist.');
+                } else {
+                    if (playlist.length > 0) {
+                        player.deletePlaylist(playlist);
+                        toastr.success('Deleted playlist: ' + playlist);
+                    }
+                }
+            }).modal('toggle');
+        });
     });
 
     // Enable global tooltips.

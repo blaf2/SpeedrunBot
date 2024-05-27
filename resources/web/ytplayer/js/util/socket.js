@@ -105,6 +105,22 @@ $(function() {
         });
     };
 
+    player.addPlaylist = (playlist_id) => {
+        // Update the data.
+        sendToSocket({
+            command: 'addPlaylist',
+            youTubeID: (playlist_id === undefined ? '' : playlist_id),
+        });
+    };
+
+    player.deletePlaylist = (playlist_name) => {
+        // Update the data.
+        sendToSocket({
+            command: 'deletePlaylist',
+            playlistName: (playlist_name === undefined ? '' : playlist_name),
+        });
+    };
+
     /*
      * @function adds a song to the queue.
      *
