@@ -13,6 +13,12 @@ Additional functionality is enabled through the use of third-party modules.
 * [Get PhantomBot](https://phantombot.dev "PhantomBot Guides and OAuth")
 * [Security Policy](https://github.com/PhantomBot/PhantomBot/blob/master/SECURITY.md)
 
+## Changes for SpeedrunBot
+- yTPlayerAddPlaylist - Allows user to add a playlist to the queue
+- yTPlayerDeletePlaylist - Allows user to delete a playlist
+- When videos are played the Twitch game will automatically change to the one specified in the video description, ex. \*Mario\*
+- New modules: blackjack, redeem, and stock
+
 ## How can I follow along/contribute?
 
 * Feel free to check out our [Version History](https://github.com/PhantomBot/PhantomBot/releases).
